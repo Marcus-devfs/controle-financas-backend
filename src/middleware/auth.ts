@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthRequest } from '../types';
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction): any => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -38,9 +38,10 @@ export const generateToken = (userId: string, email: string): string => {
     throw new Error('JWT_SECRET não configurado');
   }
 
-  return jwt.sign(
-    { id: userId, email },
-    jwtSecret,
-    { expiresIn: jwtExpiresIn }
-  );
+  // Usar tipagem explícita para evitar conflitos de overload
+  const payload: object = { id: userId, email };
+  const secret: string = jwtSecret;
+  const options: jwt.SignOptions = { expiresIn: jwtExpiresIn as any};
+  
+  return jwt.sign(payload, secret, options) as string;
 };
