@@ -18,7 +18,7 @@ import creditCardRoutes from './routes/creditCards';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Conectar ao banco de dados
 connectDB();
@@ -27,8 +27,26 @@ connectDB();
 app.use(helmet());
 
 // CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3005',
+  'https://minhas-financas-app-mvfs.vercel.app',
+  'minhas-financas-app-mvfs.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Permitir requisições sem origin (ex: mobile apps, Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Não permitido pelo CORS'), false);
+  },
   credentials: true
 }));
 
@@ -93,10 +111,27 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Iniciar servidor
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 URL: http://localhost:${PORT}`);
+});
+
+// Tratamento para encerramento gracioso do servidor
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM recebido. Encerrando servidor graciosamente...');
+  server.close(() => {
+    console.log('✅ Servidor encerrado.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT recebido (Ctrl+C). Encerrando servidor graciosamente...');
+  server.close(() => {
+    console.log('✅ Servidor encerrado.');
+    process.exit(0);
+  });
 });
 
 export default app;

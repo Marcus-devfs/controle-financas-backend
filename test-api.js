@@ -1,6 +1,5 @@
 // Script para testar a API
 const testAPI = async () => {
-  const baseURL = 'http://localhost:3001';
   
   console.log('🧪 Testando API do Controle Financeiro...\n');
   
