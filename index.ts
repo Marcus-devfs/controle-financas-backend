@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+// Importar conexão com banco
+import connectDB from './src/config/database';
+
 // Importar rotas
 import authRoutes from './src/routes/auth';
 import categoryRoutes from './src/routes/categories';
@@ -10,6 +13,9 @@ import creditCardRoutes from './src/routes/creditCards';
 
 // Carregar variáveis de ambiente
 dotenv.config();
+
+// Conectar ao banco de dados
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
