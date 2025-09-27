@@ -34,7 +34,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/type/:type', async (req: AuthRequest, res: Response) => {
   try {
     const { type } = req.params;
-    
+
     if (!['income', 'expense', 'investment'].includes(type)) {
       return res.status(400).json({
         success: false,
@@ -42,9 +42,9 @@ router.get('/type/:type', async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const categories = await Category.find({ 
-      userId: req.user!.id, 
-      type 
+    const categories = await Category.find({
+      userId: req.user!.id,
+      type
     }).sort({ name: 1 });
 
     const response: ApiResponse = {
@@ -68,10 +68,14 @@ router.post('/', validateCategory, async (req: AuthRequest, res: Response) => {
   try {
     const { name, type, color } = req.body;
 
+    async function randomColor() {
+      return '#' + Math.floor(Math.random() * 16777215).toString(16);
+    }
+
     // Verificar se já existe categoria com o mesmo nome para o usuário
-    const existingCategory = await Category.findOne({ 
-      userId: req.user!.id, 
-      name: { $regex: new RegExp(`^${name}$`, 'i') } 
+    const existingCategory = await Category.findOne({
+      userId: req.user!.id,
+      name: { $regex: new RegExp(`^${name}$`, 'i') }
     });
 
     if (existingCategory) {
@@ -85,7 +89,7 @@ router.post('/', validateCategory, async (req: AuthRequest, res: Response) => {
       userId: req.user!.id,
       name,
       type,
-      color
+      color: await randomColor()
     });
 
     await category.save();
@@ -112,9 +116,9 @@ router.put('/:id', validateCategory, async (req: AuthRequest, res: Response) => 
     const { id } = req.params;
     const { name, type, color } = req.body;
 
-    const category = await Category.findOne({ 
-      _id: id, 
-      userId: req.user!.id 
+    const category = await Category.findOne({
+      _id: id,
+      userId: req.user!.id
     });
 
     if (!category) {
@@ -125,8 +129,8 @@ router.put('/:id', validateCategory, async (req: AuthRequest, res: Response) => 
     }
 
     // Verificar se já existe outra categoria com o mesmo nome
-    const existingCategory = await Category.findOne({ 
-      userId: req.user!.id, 
+    const existingCategory = await Category.findOne({
+      userId: req.user!.id,
       name: { $regex: new RegExp(`^${name}$`, 'i') },
       _id: { $ne: id }
     });
@@ -165,9 +169,9 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const category = await Category.findOneAndDelete({ 
-      _id: id, 
-      userId: req.user!.id 
+    const category = await Category.findOneAndDelete({
+      _id: id,
+      userId: req.user!.id
     });
 
     if (!category) {
