@@ -54,8 +54,7 @@ const AIAnalysisSchema = new Schema<IAIAnalysis>({
     suggestions: [{
       type: {
         type: String,
-        required: true,
-        enum: ['expense_reduction', 'income_increase', 'investment_optimization', 'budget_adjustment', 'financial_planning', 'budget_management']
+        required: true
       },
       title: {
         type: String,

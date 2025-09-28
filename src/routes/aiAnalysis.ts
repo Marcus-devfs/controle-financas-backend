@@ -66,6 +66,9 @@ router.post('/', authenticateToken, async (req, res) => {
     // Buscar análise existente ou criar nova
     const existingAnalysis = await AIAnalysis.findOne({ userId, month });
 
+
+    console.log('🔍 Debug - existingAnalysis:', existingAnalysis);
+    console.log('🔍 Debug - analysis:', analysis);
     let savedAnalysis;
     if (existingAnalysis) {
       // Atualizar análise existente
