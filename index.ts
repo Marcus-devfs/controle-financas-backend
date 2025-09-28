@@ -10,6 +10,7 @@ import authRoutes from './src/routes/auth';
 import categoryRoutes from './src/routes/categories';
 import transactionRoutes from './src/routes/transactions';
 import creditCardRoutes from './src/routes/creditCards';
+import aiAnalysisRoutes from './src/routes/aiAnalysis';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
+app.use('/api/ai-analysis', aiAnalysisRoutes);
 
 // Rota raiz
 app.get('/', (req, res) => {
@@ -49,7 +51,8 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       categories: '/api/categories',
       transactions: '/api/transactions',
-      creditCards: '/api/credit-cards'
+      creditCards: '/api/credit-cards',
+      aiAnalysis: '/api/ai-analysis'
     }
   });
 });
