@@ -63,6 +63,7 @@ export interface ITransaction extends Document {
   amount: number;
   date: string;
   type: 'income' | 'expense' | 'investment';
+  isPaid: boolean;
   isFixed: boolean;
   isRecurring: boolean;
   recurringRule?: IRecurringRule;

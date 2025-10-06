@@ -97,8 +97,50 @@ export const validateTransaction = [
   body('type')
     .isIn(['income', 'expense', 'investment'])
     .withMessage('Tipo deve ser: income, expense ou investment'),
+  body('isPaid')
+    .optional()
+    .isBoolean()
+    .withMessage('isPaid deve ser booleano'),
   body('categoryId')
     .notEmpty()
     .withMessage('ID da categoria é obrigatório'),
+  handleValidationErrors
+];
+
+// Validação para atualização parcial de transação
+export const validateTransactionUpdate = [
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Descrição deve ter entre 2 e 100 caracteres'),
+  body('amount')
+    .optional()
+    .isFloat({ min: 0.01 })
+    .withMessage('Valor deve ser um número maior que 0'),
+  body('date')
+    .optional()
+    .matches(/^\d{4}-\d{2}-\d{2}$/)
+    .withMessage('Data deve estar no formato YYYY-MM-DD'),
+  body('type')
+    .optional()
+    .isIn(['income', 'expense', 'investment'])
+    .withMessage('Tipo deve ser: income, expense ou investment'),
+  body('isPaid')
+    .optional()
+    .isBoolean()
+    .withMessage('isPaid deve ser booleano'),
+  body('categoryId')
+    .optional()
+    .notEmpty()
+    .withMessage('ID da categoria é obrigatório'),
+  body('isFixed')
+    .optional()
+    .isBoolean()
+    .withMessage('isFixed deve ser booleano'),
+  body('isRecurring')
+    .optional()
+    .isBoolean()
+    .withMessage('isRecurring deve ser booleano'),
   handleValidationErrors
 ];

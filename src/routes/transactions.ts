@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import Transaction from '../models/Transaction';
 import Category from '../models/Category';
 import { authenticateToken } from '../middleware/auth';
-import { validateTransaction } from '../middleware/validation';
+import { validateTransaction, validateTransactionUpdate } from '../middleware/validation';
 import { AuthRequest, ApiResponse } from '../types';
 
 const router = Router();
@@ -145,7 +145,7 @@ router.post('/', validateTransaction, async (req: AuthRequest, res: Response) =>
 });
 
 // Atualizar transação
-router.put('/:id', validateTransaction, async (req: AuthRequest, res: Response) => {
+router.put('/:id', validateTransactionUpdate, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;

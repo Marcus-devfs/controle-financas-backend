@@ -86,6 +86,10 @@ const transactionSchema = new Schema<ITransaction>({
       message: 'Tipo deve ser: income, expense ou investment'
     }
   },
+  isPaid: {
+    type: Boolean,
+    default: false
+  },
   isFixed: {
     type: Boolean,
     default: false
