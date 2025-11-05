@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import Transaction from '../models/Transaction';
 import Category from '../models/Category';
+import CreditCard from '../models/CreditCard';
+import CreditCardBill from '../models/CreditCardBill';
 import { authenticateToken } from '../middleware/auth';
 import { validateTransaction, validateTransactionUpdate } from '../middleware/validation';
 import { AuthRequest, ApiResponse } from '../types';
@@ -69,7 +71,30 @@ router.get('/month/:month', async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Buscar transações sem populate primeiro para filtrar dados inválidos
+    const transactionsRaw = await Transaction.find({ 
+      userId: req.user!.id, 
+      month 
+    }).lean();
+
+    // Filtrar transações com categoryId válido (string/ObjectId)
+    const validTransactions = transactionsRaw.filter(t => {
+      const catId: any = t.categoryId;
+      // Verificar se é string válida ou ObjectId válido
+      if (typeof catId === 'string') {
+        return /^[0-9a-fA-F]{24}$/.test(catId);
+      }
+      if (catId && typeof catId === 'object' && catId !== null && '_id' in catId) {
+        return /^[0-9a-fA-F]{24}$/.test(String(catId._id));
+      }
+      return false;
+    });
+
+    // Buscar novamente com populate apenas para transações válidas
+    const transactionIds = validTransactions.map(t => t._id);
+    
     const transactions = await Transaction.find({ 
+      _id: { $in: transactionIds },
       userId: req.user!.id, 
       month 
     })
@@ -296,6 +321,145 @@ router.get('/stats/:month', async (req: AuthRequest, res: Response) => {
     res.json(response);
   } catch (error) {
     console.error('Erro ao calcular estatísticas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Duplicar transações fixas e faturas de cartão de um mês para outro
+router.post('/duplicate-month/:sourceMonth/:targetMonth', async (req: AuthRequest, res: Response) => {
+  try {
+    const { sourceMonth, targetMonth } = req.params;
+    
+    // Validar formato dos meses
+    if (!/^\d{4}-\d{2}$/.test(sourceMonth) || !/^\d{4}-\d{2}$/.test(targetMonth)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Formato do mês inválido. Use YYYY-MM'
+      });
+    }
+
+    const userId = req.user!.id;
+    const sourceDate = new Date(sourceMonth + '-01');
+    const targetDate = new Date(targetMonth + '-01');
+    const duplicated: string[] = [];
+
+    // 1. Duplicar transações fixas do mês origem
+    const fixedTransactions = await Transaction.find({
+      userId,
+      month: sourceMonth,
+      isFixed: true
+    }).lean();
+
+    for (const fixed of fixedTransactions) {
+      // Verificar se já existe uma transação igual no mês destino
+      const existing = await Transaction.findOne({
+        userId,
+        month: targetMonth,
+        description: fixed.description,
+        amount: fixed.amount,
+        categoryId: fixed.categoryId,
+        type: fixed.type,
+        isFixed: true
+      });
+
+      if (!existing) {
+        // Calcular data baseada no dayOfMonth
+        let transactionDate = new Date(targetDate);
+        if (fixed.dayOfMonth) {
+          const lastDay = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+          const day = Math.min(fixed.dayOfMonth, lastDay);
+          transactionDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), day);
+        } else {
+          // Usar o mesmo dia do mês original
+          const originalDate = new Date(fixed.date);
+          const lastDay = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+          const day = Math.min(originalDate.getDate(), lastDay);
+          transactionDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), day);
+        }
+
+        const newTransaction = new Transaction({
+          userId,
+          categoryId: fixed.categoryId.toString(),
+          description: fixed.description,
+          amount: fixed.amount,
+          date: transactionDate.toISOString().split('T')[0],
+          type: fixed.type,
+          isFixed: true,
+          isRecurring: fixed.isRecurring || false,
+          recurringRule: fixed.recurringRule || undefined,
+          dayOfMonth: fixed.dayOfMonth || undefined,
+          month: targetMonth,
+          isPaid: false // Nova transação sempre começa como não paga
+        });
+
+        await newTransaction.save();
+        duplicated.push(newTransaction._id.toString());
+      }
+    }
+
+    // 2. Duplicar faturas de cartão de crédito do mês origem
+    const sourceBills = await CreditCardBill.find({
+      userId,
+      month: sourceMonth
+    }).lean();
+
+    for (const sourceBill of sourceBills) {
+      // Verificar se já existe fatura para este mês
+      const existingBill = await CreditCardBill.findOne({
+        userId,
+        cardId: sourceBill.cardId.toString(),
+        month: targetMonth
+      });
+
+      if (!existingBill) {
+        // Buscar todas as transações do cartão no mês origem para copiar
+        const sourceTransactions = await Transaction.find({
+          userId,
+          creditCardId: sourceBill.cardId.toString(),
+          month: sourceMonth
+        }).lean();
+
+        // Calcular data de vencimento baseada no cartão
+        const card = await CreditCard.findById(sourceBill.cardId);
+        if (card) {
+          const lastDay = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+          const dueDay = Math.min(card.dueDay, lastDay);
+          const dueDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), dueDay);
+
+          // Criar fatura vazia para o mês destino (transações serão adicionadas depois)
+          const newBill = new CreditCardBill({
+            userId,
+            cardId: sourceBill.cardId.toString(),
+            month: targetMonth,
+            totalAmount: 0, // Começa vazio, será atualizado quando houver transações
+            paidAmount: 0,
+            dueDate: dueDate.toISOString().split('T')[0],
+            status: 'pending',
+            transactions: []
+          });
+
+          await newBill.save();
+          duplicated.push(newBill._id.toString());
+        }
+      }
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      message: `Transações e faturas duplicadas de ${sourceMonth} para ${targetMonth}`,
+      data: {
+        sourceMonth,
+        targetMonth,
+        duplicatedCount: duplicated.length
+      }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Erro ao duplicar mês:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
