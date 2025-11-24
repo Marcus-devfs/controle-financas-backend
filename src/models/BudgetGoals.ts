@@ -26,6 +26,10 @@ export interface IBudgetGoals extends Document {
       savings: number;
     };
     generatedAt: string;
+    userPreferences?: {
+      targetSavings?: number;
+      fixedCategories?: string[];
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -120,6 +124,10 @@ const BudgetGoalsSchema = new Schema<IBudgetGoals>({
     generatedAt: {
       type: String,
       required: true
+    },
+    userPreferences: {
+      targetSavings: Number,
+      fixedCategories: [String]
     }
   },
   createdAt: {
