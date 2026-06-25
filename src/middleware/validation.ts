@@ -144,3 +144,52 @@ export const validateTransactionUpdate = [
     .withMessage('isRecurring deve ser booleano'),
   handleValidationErrors
 ];
+
+export const validateInvestmentAccount = [
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Nome deve ter entre 2 e 50 caracteres'),
+  body('institution')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Instituição deve ter entre 2 e 50 caracteres'),
+  body('cdiPercentage')
+    .isFloat({ min: 0, max: 500 })
+    .withMessage('Percentual do CDI deve ser entre 0 e 500'),
+  body('color')
+    .optional()
+    .matches(/^#[0-9A-F]{6}$/i)
+    .withMessage('Cor deve estar no formato hexadecimal (#RRGGBB)'),
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive deve ser booleano'),
+  handleValidationErrors
+];
+
+export const validateInvestmentMovement = [
+  body('type')
+    .isIn(['deposit', 'withdrawal', 'snapshot'])
+    .withMessage('Tipo deve ser: deposit, withdrawal ou snapshot'),
+  body('amount')
+    .isFloat({ min: 0.01 })
+    .withMessage('Valor deve ser um número maior que 0'),
+  body('date')
+    .matches(/^\d{4}-\d{2}-\d{2}$/)
+    .withMessage('Data deve estar no formato YYYY-MM-DD'),
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Descrição deve ter no máximo 100 caracteres'),
+  body('netBalance')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Saldo líquido deve ser um número maior ou igual a 0'),
+  body('investmentStartDate')
+    .optional()
+    .matches(/^\d{4}-\d{2}-\d{2}$/)
+    .withMessage('Data de início deve estar no formato YYYY-MM-DD'),
+  handleValidationErrors
+];

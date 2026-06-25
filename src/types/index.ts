@@ -90,6 +90,81 @@ export interface ICreditCardBill extends Document {
   updatedAt: Date;
 }
 
+// Investment Account Types
+export interface IInvestmentAccount extends Document {
+  _id: string;
+  userId: string;
+  name: string;
+  institution: string;
+  cdiPercentage: number;
+  color: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IInvestmentMovement extends Document {
+  _id: string;
+  userId: string;
+  accountId: string;
+  type: 'deposit' | 'withdrawal' | 'snapshot';
+  amount: number;
+  date: string;
+  description: string;
+  netBalance?: number;
+  investmentStartDate?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICdiRate extends Document {
+  _id: string;
+  date: string;
+  dailyRate: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InvestmentLotSummary {
+  depositDate: string;
+  principal: number;
+  grossYield: number;
+  daysHeld: number;
+  irRate: number;
+  estimatedIr: number;
+}
+
+export interface AccountPortfolioSummary {
+  accountId: string;
+  name: string;
+  institution: string;
+  cdiPercentage: number;
+  color: string;
+  currentBalance: number;
+  principal: number;
+  grossYield: number;
+  estimatedIr: number;
+  netBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  todayYield: number;
+  monthYield: number;
+  lots: InvestmentLotSummary[];
+}
+
+export interface PortfolioSummary {
+  totalBalance: number;
+  totalPrincipal: number;
+  totalGrossYield: number;
+  totalEstimatedIr: number;
+  totalNetBalance: number;
+  todayYield: number;
+  monthYield: number;
+  accounts: AccountPortfolioSummary[];
+  lastCdiUpdate: string | null;
+  currentCdiRate: number | null;
+}
+
 // Request Types
 export interface AuthRequest extends Request {
   user?: {

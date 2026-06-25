@@ -12,6 +12,7 @@ import transactionRoutes from './src/routes/transactions';
 import creditCardRoutes from './src/routes/creditCards';
 import aiAnalysisRoutes from './src/routes/aiAnalysis';
 import budgetGoalsRoutes from './src/routes/budgetGoals';
+import investmentAccountRoutes from './src/routes/investmentAccounts';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
 app.use('/api/ai-analysis', aiAnalysisRoutes);
 app.use('/api/budget-goals', budgetGoalsRoutes);
+app.use('/api/investment-accounts', investmentAccountRoutes);
 
 // Rota raiz
 app.get('/', (req, res) => {
@@ -55,7 +57,8 @@ app.get('/', (req, res) => {
       transactions: '/api/transactions',
       creditCards: '/api/credit-cards',
       aiAnalysis: '/api/ai-analysis',
-      budgetGoals: '/api/budget-goals'
+      budgetGoals: '/api/budget-goals',
+      investmentAccounts: '/api/investment-accounts'
     }
   });
 });
